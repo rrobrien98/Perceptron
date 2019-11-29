@@ -45,11 +45,17 @@ public class NN {
 		// TODO set the array of optimal nodes based on what the input is representing, could also be done in same
 		// method as when we set the input nodes
 		
+		
 	}
 
 	private void updateWeights() {
 		//for each connection, update its weight based on formula circled in red in group chat
-		
+		for (int i = 0; i<this.connections.size();i++) {
+			Connection connection = this.connections.get(i);
+			double err = this.optimal_solution[connection.getOutput()] + this.output_nodes[connection.getOutput()];
+			//TODO need to find some way of saving the input to each output node as well as output, as we need to pass this into derivative funciton here
+			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv()));//in progress here
+		}
 	}
 
 	private void setOutputNodes() {
@@ -109,5 +115,8 @@ public class NN {
 	private double output_function(double input) {
 		return Math.pow(1+Math.exp(-1*input + 0.5), -1);
 	
+	}
+	private double output_function_deriv(double input) {
+		return Math.pow(1+Math.exp(-1*input + 0.5), -2) * -1 * Math.exp(-1*input + 0.5);
 	}
 }
