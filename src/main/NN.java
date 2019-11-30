@@ -1,14 +1,13 @@
 package main;
 
-import main.resources.Params;
-
 import java.util.ArrayList;
 
 import main.resources.Connection;
+import main.resources.Params;
 public class NN {
 	
 	private int[] input_nodes;
-	private ArrayList<Connection> connections;
+	private ArrayList<Connection> connections; 
 	private Params params;
 	private double[] output_nodes;
 	private int[] optimal_solution;
@@ -52,9 +51,8 @@ public class NN {
 		//for each connection, update its weight based on formula circled in red in group chat
 		for (int i = 0; i<this.connections.size();i++) {
 			Connection connection = this.connections.get(i);
-			double err = this.optimal_solution[connection.getOutput()] + this.output_nodes[connection.getOutput()];
-			//TODO need to find some way of saving the input to each output node as well as output, as we need to pass this into derivative funciton here
-			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv()));//in progress here
+			double err = this.optimal_solution[connection.getOutput()] - this.output_function(this.output_nodes[connection.getOutput()]);
+			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv(connection.getOutput())*this.input_nodes[connection.getInput()]*this.params.getLr()));
 		}
 	}
 
@@ -63,9 +61,10 @@ public class NN {
 			Connection connection = this.connections.get(i);
 			this.output_nodes[connection.getOutput()] += this.input_nodes[connection.getInput()] * connection.getWeight();
 		}
-		for (int i = 0; i < this.output_nodes.length; i++) {
-			this.output_nodes[i] = this.output_function(this.output_nodes[i]);
-		}
+		//just set output nodes as sum of inputs
+		//for (int i = 0; i < this.output_nodes.length; i++) {
+		//	this.output_nodes[i] = this.output_function(this.output_nodes[i]);
+		//}
 		
 	}
 

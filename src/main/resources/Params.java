@@ -29,4 +29,8 @@ public class Params {
 	public int getInput_nodes() {
 		return input_nodes;
 	}
+
+	public double getLr() {
+		return lr;
+	}
 }
