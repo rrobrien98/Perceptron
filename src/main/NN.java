@@ -1,22 +1,26 @@
 package main;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import main.resources.Connection;
 import main.resources.Params;
 public class NN {
-	
+	private static final int LIST_NODES = 64;
 	private int[] input_nodes;
 	private ArrayList<Connection> connections; 
 	private Params params;
 	private double[] output_nodes;
-	private int[] optimal_solution;
+	private double[] optimal_solution;
 	public NN(Params params) {
 		this.input_nodes = new int[this.params.getInput_nodes()];
 		this.connections = new ArrayList<Connection>();
 		this.output_nodes = new double[this.params.getOutput_nodes()];
 		this.params = params;
-		this.optimal_solution = null;
+		this.optimal_solution = new double[this.params.getOptimal_rep()];
 		this.initializeConnections();
 		this.trainNN();
 	}
@@ -35,16 +39,41 @@ public class NN {
 		while (this.params.getIterations()>iterations) {
 			this.setInputNodes();
 			this.setOutputNodes();
-			this.setOptimalNodes();
 			this.updateWeights();
 		}
 	}
 
-	private void setOptimalNodes() {
+	private void setOptimalNodes(int solution) {
 		// TODO set the array of optimal nodes based on what the input is representing, could also be done in same
 		// method as when we set the input nodes
+		switch(this.params.getOutput_nodes()) {
+		case 10:
+			
+			this.setSingleOutput(solution);
+		case 1:
+			
+			this.setDecimalOutput(solution);
+		default:
+			System.out.println("Unrecognized input type");
+	}
 		
-		
+	}
+
+	private void setDecimalOutput(int solution) {
+		// TODO Auto-generated method stub
+		for (int i = 0; i < this.optimal_solution.length; i++) {
+			if (i == solution) {
+				this.optimal_solution[i] = 1;
+			}
+			else {
+				this.optimal_solution[i] = 0;
+			}
+		}
+	}
+
+	private void setSingleOutput(int solution) {
+		// TODO Auto-generated method stub
+		this.optimal_solution[0] = (solution * 0.1);
 	}
 
 	private void updateWeights() {
@@ -104,11 +133,46 @@ public class NN {
 
 	private void setArrayNodes() {
 		// TODO 
-		
+		try {
+			int array_index = 0;
+			BufferedReader br = new BufferedReader(new FileReader(this.params.getFilename()));
+			String line = br.readLine().trim();
+			while(line.length()!=1) {//go until classification
+				for (int i = 0; i<line.length();i++) {
+					this.input_nodes[array_index] = line.charAt(i);
+					array_index++;
+				}
+				line = br.readLine().trim();
+			}
+			this.setOptimalNodes(Integer.parseInt(line));
+			br.close();
+		} catch (FileNotFoundException e) {
+			System.out.print("Input File Not Found.");
+		} catch (IOException e) {
+			System.out.print("IO error in br.readline()");
+			e.printStackTrace();
+		}
 	}
 
 	private void setListNodes() {
 		// TODO 
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(this.params.getFilename()));
+			String line = br.readLine().trim();
+			for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
+				//once the first city is reached start recording cities.
+				this.input_nodes[i] = line.charAt(i);
+
+			}
+			this.setOptimalNodes(line.charAt(LIST_NODES));
+			//MAY NEED TO KEEP TRACK OF POSITION IN FILE
+			br.close();
+		} catch (FileNotFoundException e) {
+			System.out.print("Input File Not Found.");
+		} catch (IOException e) {
+			System.out.print("IO error in br.readline()");
+			e.printStackTrace();
+		}
 		
 	}
 	private double output_function(double input) {

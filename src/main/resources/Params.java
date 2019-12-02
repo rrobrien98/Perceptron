@@ -7,12 +7,14 @@ public class Params {
 	private String filename;
 	private int iterations;
 	private double lr;
-	public Params(int input_nodes, int output_nodes, String filename, int iterations, double lr) {
+	private int optimal_rep;
+	public Params(int input_nodes, int output_nodes, String filename, int iterations, double lr, int optimal_rep) {
 		this.input_nodes = input_nodes;
 		this.output_nodes = output_nodes;
 		this.filename=filename;
 		this.iterations=iterations;
 		this.lr = lr;
+		this.optimal_rep=optimal_rep;
 	}
 
 	public String getFilename() {
@@ -32,5 +34,9 @@ public class Params {
 
 	public double getLr() {
 		return lr;
+	}
+
+	public int getOptimal_rep() {
+		return optimal_rep;
 	}
 }
