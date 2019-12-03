@@ -6,8 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import main.resources.Connection;
-import main.resources.Params;
+
+import main.resources.*;
 public class NN {
 	private static final int LIST_NODES = 64;
 	private int[] input_nodes;
@@ -20,7 +20,7 @@ public class NN {
 		this.connections = new ArrayList<Connection>();
 		this.output_nodes = new double[this.params.getOutput_nodes()];
 		this.params = params;
-		this.optimal_solution = new double[this.params.getOptimal_rep()];
+		this.optimal_solution = new double[this.params.getOutput_nodes()];
 		this.initializeConnections();
 		this.trainNN();
 	}
@@ -42,19 +42,19 @@ public class NN {
 			this.updateWeights();
 		}
 	}
-
+	private void testNN() {
+		
+	}
 	private void setOptimalNodes(int solution) {
 		// TODO set the array of optimal nodes based on what the input is representing, could also be done in same
 		// method as when we set the input nodes
 		switch(this.params.getOutput_nodes()) {
 		case 10:
-			
 			this.setSingleOutput(solution);
 		case 1:
-			
 			this.setDecimalOutput(solution);
 		default:
-			System.out.println("Unrecognized input type");
+			System.out.println("Unrecognized output type");
 	}
 		
 	}
@@ -73,7 +73,7 @@ public class NN {
 
 	private void setSingleOutput(int solution) {
 		// TODO Auto-generated method stub
-		this.optimal_solution[0] = (solution * 0.1);
+		this.optimal_solution[0] = (solution * 0.1); 
 	}
 
 	private void updateWeights() {
