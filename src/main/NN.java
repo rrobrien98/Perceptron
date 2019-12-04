@@ -15,6 +15,8 @@ public class NN {
 	private Params params;
 	private double[] output_nodes;
 	private double[] optimal_solution;
+	private int passed_tests;
+	private int solution;
 	public NN(Params params) {
 		this.input_nodes = new int[this.params.getInput_nodes()];
 		this.connections = new ArrayList<Connection>();
@@ -23,6 +25,8 @@ public class NN {
 		this.optimal_solution = new double[this.params.getOutput_nodes()];
 		this.initializeConnections();
 		this.trainNN();
+		this.solution = 0;
+		this.passed_tests = 0;
 	}
 	
 	private void initializeConnections() {
@@ -37,14 +41,55 @@ public class NN {
 	private void trainNN() {
 		int iterations = 0;
 		while (this.params.getIterations()>iterations) {
-			this.setInputNodes();
+			this.setInputNodes(this.params.getFilename());
 			this.setOutputNodes();
 			this.updateWeights();
 		}
 	}
 	private void testNN() {
+		int tests = 0;
+		while (this.params.getTests()>tests) {
+			this.setInputNodes(this.params.getTestfile());
+			this.setOutputNodes();
+			this.getClassification();
+			
+		}
+	}
+	private void getClassification() {
+		// TODO Auto-generated method stub
+		switch(this.params.getOutput_nodes()) {
+		case 10:
+			this.singleClassification();
+		case 1:
+			this.decimalClassification();
+		default:
+			System.out.println("Unrecognized output type");
+		}
 		
 	}
+
+	private void decimalClassification() {
+		// TODO Auto-generated method stub
+		int max_index = 0;
+		double max_val = Double.MAX_VALUE;
+		for (int i = 0; i < this.output_nodes.length; i++) {
+			if (this.output_nodes[i] > max_val) {
+				max_val = this.output_nodes[i];
+				max_index = i;
+			}
+		}
+		if (max_index == this.solution) {
+			this.passed_tests++;
+		} 
+	}
+
+	private void singleClassification() {
+		// TODO Auto-generated method stub
+		if (this.solution == Math.round(10*this.output_nodes[0])) {
+			this.passed_tests++;
+		}
+	}
+
 	private void setOptimalNodes(int solution) {
 		// TODO set the array of optimal nodes based on what the input is representing, could also be done in same
 		// method as when we set the input nodes
@@ -55,7 +100,7 @@ public class NN {
 			this.setDecimalOutput(solution);
 		default:
 			System.out.println("Unrecognized output type");
-	}
+		}
 		
 	}
 
@@ -97,14 +142,14 @@ public class NN {
 		
 	}
 
-	private void setInputNodes() {
+	private void setInputNodes(String filename) {
 		switch(this.params.getInput_nodes()) {
 			case 32*32:
 				//parse 32x32 bit array, one node created for value of each bit
-				this.setArrayNodes();
+				this.setArrayNodes(filename);
 			case 64:
 				//parse 64 int list, one node for each int
-				this.setListNodes();
+				this.setListNodes(filename);
 			default:
 				System.out.println("Unrecognized input type");
 		}
@@ -131,11 +176,11 @@ public class NN {
 
 
 
-	private void setArrayNodes() {
+	private void setArrayNodes(String filename) {
 		// TODO 
 		try {
 			int array_index = 0;
-			BufferedReader br = new BufferedReader(new FileReader(this.params.getFilename()));
+			BufferedReader br = new BufferedReader(new FileReader(filename));
 			String line = br.readLine().trim();
 			while(line.length()!=1) {//go until classification
 				for (int i = 0; i<line.length();i++) {
@@ -144,7 +189,8 @@ public class NN {
 				}
 				line = br.readLine().trim();
 			}
-			this.setOptimalNodes(Integer.parseInt(line));
+			this.solution = Integer.parseInt(line);
+			this.setOptimalNodes(this.solution);
 			br.close();
 		} catch (FileNotFoundException e) {
 			System.out.print("Input File Not Found.");
@@ -154,17 +200,18 @@ public class NN {
 		}
 	}
 
-	private void setListNodes() {
+	private void setListNodes(String filename) {
 		// TODO 
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(this.params.getFilename()));
+			BufferedReader br = new BufferedReader(new FileReader(filename));
 			String line = br.readLine().trim();
 			for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
 				//once the first city is reached start recording cities.
 				this.input_nodes[i] = line.charAt(i);
 
 			}
-			this.setOptimalNodes(line.charAt(LIST_NODES));
+			this.solution = line.charAt(LIST_NODES);
+			this.setOptimalNodes(this.solution);
 			//MAY NEED TO KEEP TRACK OF POSITION IN FILE
 			br.close();
 		} catch (FileNotFoundException e) {
@@ -181,5 +228,9 @@ public class NN {
 	}
 	private double output_function_deriv(double input) {
 		return Math.pow(1+Math.exp(-1*input + 0.5), -2) * -1 * Math.exp(-1*input + 0.5);
+	}
+	public int getPassedTests() {
+		return this.passed_tests;
+	}
 	}
 }

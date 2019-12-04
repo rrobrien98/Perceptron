@@ -7,13 +7,17 @@ public class Params {
 	private String filename;
 	private int iterations;
 	private double lr;
+	private int tests;
+	private String testfile;
 	
-	public Params(int input_nodes, int output_nodes, String filename, int iterations, double lr) {
+	public Params(int input_nodes, int output_nodes, String filename, int iterations, double lr, int tests, String testfile) {
 		this.input_nodes = input_nodes;
 		this.output_nodes = output_nodes;
 		this.filename=filename;
 		this.iterations=iterations;
 		this.lr = lr;
+		this.tests = tests;
+		this.testfile = testfile;
 		
 	}
 
@@ -34,6 +38,14 @@ public class Params {
 
 	public double getLr() {
 		return lr;
+	}
+
+	public int getTests() {
+		return tests;
+	}
+
+	public String getTestfile() {
+		return testfile;
 	}
 
 
