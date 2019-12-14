@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 
 import main.resources.*;
-public class NN {
+public class NN { 
 	private static final int LIST_NODES = 64;
 	private int[] input_nodes;
 	private ArrayList<Connection> connections; 
@@ -16,16 +16,21 @@ public class NN {
 	private double[] output_nodes;
 	private double[] optimal_solution;
 	private int passed_tests;
-	private int solution;
+	private int[] solution;
+	
+	private int[][] train_data;
 	public NN(Params params) {
+		this.params = params;
 		this.input_nodes = new int[this.params.getInput_nodes()];
 		this.connections = new ArrayList<Connection>();
 		this.output_nodes = new double[this.params.getOutput_nodes()];
-		this.params = params;
 		this.optimal_solution = new double[this.params.getOutput_nodes()];
+		this.solution = new int[this.params.getIterations()];
+		this.train_data = new int[this.params.getIterations()][this.params.getInput_nodes()];
 		this.initializeConnections();
 		this.trainNN();
-		this.solution = 0;
+
+
 		this.passed_tests = 0;
 	}
 	
@@ -40,35 +45,52 @@ public class NN {
 
 	private void trainNN() {
 		int iterations = 0;
+		this.initInput(this.params.getFilename());
+		this.setOptimalNodes(solution[iterations]);
 		while (this.params.getIterations()>iterations) {
-			this.setInputNodes(this.params.getFilename());
+			this.setInputNodes(iterations);
+			this.setOptimalNodes(solution[iterations]);
 			this.setOutputNodes();
 			this.updateWeights();
+			iterations++;
+			System.out.println(this.output_nodes[0]);
 		}
 	}
+
+
+
 	private void testNN() {
 		int tests = 0;
+		this.initInput(this.params.getTestfile());
 		while (this.params.getTests()>tests) {
-			this.setInputNodes(this.params.getTestfile());
+			this.setInputNodes(tests);
 			this.setOutputNodes();
-			this.getClassification();
+			this.getClassification(solution[tests]);
 			
 		}
+	}	
+	private void setInputNodes(int iteration) {
+		// TODO Auto-generated method stub
+		this.input_nodes = this.train_data[iteration];
 	}
-	private void getClassification() {
+	private void getClassification(int iteration) {
 		// TODO Auto-generated method stub
 		switch(this.params.getOutput_nodes()) {
+		
 		case 10:
-			this.singleClassification();
+			this.singleClassification(iteration);
+			break;
 		case 1:
-			this.decimalClassification();
+			this.decimalClassification(iteration);
+			break;
 		default:
 			System.out.println("Unrecognized output type");
+			break;
 		}
 		
 	}
 
-	private void decimalClassification() {
+	private void decimalClassification(int iteration) {
 		// TODO Auto-generated method stub
 		int max_index = 0;
 		double max_val = Double.MAX_VALUE;
@@ -78,14 +100,14 @@ public class NN {
 				max_index = i;
 			}
 		}
-		if (max_index == this.solution) {
+		if (max_index == this.solution[iteration]) {
 			this.passed_tests++;
 		} 
 	}
 
-	private void singleClassification() {
+	private void singleClassification(int iteration) {
 		// TODO Auto-generated method stub
-		if (this.solution == Math.round(10*this.output_nodes[0])) {
+		if (this.solution[iteration] == Math.round(10*this.output_nodes[0])) {
 			this.passed_tests++;
 		}
 	}
@@ -95,11 +117,14 @@ public class NN {
 		// method as when we set the input nodes
 		switch(this.params.getOutput_nodes()) {
 		case 10:
-			this.setSingleOutput(solution);
-		case 1:
 			this.setDecimalOutput(solution);
+			break;
+		case 1:
+			this.setSingleOutput(solution);
+			break;
 		default:
 			System.out.println("Unrecognized output type");
+			break;
 		}
 		
 	}
@@ -142,16 +167,19 @@ public class NN {
 		
 	}
 
-	private void setInputNodes(String filename) {
+	private void initInput(String filename) {
 		switch(this.params.getInput_nodes()) {
 			case 32*32:
 				//parse 32x32 bit array, one node created for value of each bit
-				this.setArrayNodes(filename);
+				this.initArrayInput(filename);
+				break;
 			case 64:
 				//parse 64 int list, one node for each int
-				this.setListNodes(filename);
+				this.initListInput(filename);
+				break;
 			default:
 				System.out.println("Unrecognized input type");
+				break;
 		}
 				
 		
@@ -176,22 +204,23 @@ public class NN {
 
 
 
-	private void setArrayNodes(String filename) {
+	private void initArrayInput(String filename) {
 		// TODO 
 		try {
-			int array_index = 0;
 			BufferedReader br = new BufferedReader(new FileReader(filename));
-			String line = br.readLine().trim();
-			while(line.length()!=1) {//go until classification
-				for (int i = 0; i<line.length();i++) {
-					this.input_nodes[array_index] = line.charAt(i);
-					array_index++;
+			for (int j = 0; j < this.params.getIterations(); j++) {
+				int array_index = 0;
+				String line = br.readLine().trim();
+				while(line.length()!=1) {//go until classification
+					for (int i = 0; i<line.length();i++) {
+						this.train_data[j][array_index] = line.charAt(i);
+						array_index++;
+					}
+					line = br.readLine().trim();
 				}
-				line = br.readLine().trim();
+				this.solution[j] = Integer.parseInt(line);
+				
 			}
-			this.solution = Integer.parseInt(line);
-			this.setOptimalNodes(this.solution);
-			br.close();
 		} catch (FileNotFoundException e) {
 			System.out.print("Input File Not Found.");
 		} catch (IOException e) {
@@ -200,20 +229,22 @@ public class NN {
 		}
 	}
 
-	private void setListNodes(String filename) {
+	private void initListInput(String filename) {
 		// TODO 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(filename));
-			String line = br.readLine().trim();
-			for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
-				//once the first city is reached start recording cities.
-				this.input_nodes[i] = line.charAt(i);
-
+			
+			for (int j = 0; j < this.params.getIterations(); j++) {
+				String line = br.readLine().trim();
+				String[] vals = line.split(",");
+				for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
+					//once the first city is reached start recording cities.
+					
+					this.train_data[j][i]= Integer.parseInt(vals[i]);
+				}
+				this.solution[j] = Integer.parseInt(vals[vals.length-1]);
 			}
-			this.solution = line.charAt(LIST_NODES);
-			this.setOptimalNodes(this.solution);
-			//MAY NEED TO KEEP TRACK OF POSITION IN FILE
-			br.close();
+			
 		} catch (FileNotFoundException e) {
 			System.out.print("Input File Not Found.");
 		} catch (IOException e) {
@@ -227,10 +258,9 @@ public class NN {
 	
 	}
 	private double output_function_deriv(double input) {
-		return Math.pow(1+Math.exp(-1*input + 0.5), -2) * -1 * Math.exp(-1*input + 0.5);
+		return Math.pow(1+Math.exp(-1*input + 0.5), -2) *  Math.exp(-1*input + 0.5);
 	}
 	public int getPassedTests() {
 		return this.passed_tests;
-	}
 	}
 }
