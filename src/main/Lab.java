@@ -17,6 +17,8 @@ public class Lab {
 		Params params = new Params(input_nodes, output_nodes, filename, iterations, lr, tests, testfile);
 		NN test = new NN(params);
 		//percentage of passed tests
+		test.testNN();
+		System.out.println("results");
 		System.out.println(test.getPassedTests()/tests);
 		
 	}

@@ -1,7 +1,10 @@
 package main.resources;
 
+import java.util.Random;
+
 public class Connection {
-	public static final double INITIAL_WEIGHT = 1;
+	public static final double INITIAL_WEIGHT = 0.3;
+	public static Random rand = new Random();
 	private double weight;
 	private int input;
 	private int output;
@@ -9,7 +12,7 @@ public class Connection {
 	public Connection(int input, int output) {
 		this.setInput(input);
 		this.setOutput(output);
-		this.setWeight(INITIAL_WEIGHT);
+		this.setWeight((rand.nextDouble()*INITIAL_WEIGHT) - 0.15);
 	}
 
 	public double getWeight() {

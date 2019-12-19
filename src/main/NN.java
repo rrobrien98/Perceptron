@@ -8,25 +8,26 @@ import java.util.ArrayList;
 
 
 import main.resources.*;
+
 public class NN { 
 	private static final int LIST_NODES = 64;
-	private int[] input_nodes;
+	private double[] input_nodes;
 	private ArrayList<Connection> connections; 
 	private Params params;
 	private double[] output_nodes;
 	private double[] optimal_solution;
 	private int passed_tests;
-	private int[] solution;
+	private double[] solution;
 	
-	private int[][] train_data;
+	private double[][] train_data;
 	public NN(Params params) {
 		this.params = params;
-		this.input_nodes = new int[this.params.getInput_nodes()];
+		this.input_nodes = new double[this.params.getInput_nodes()+1];
 		this.connections = new ArrayList<Connection>();
 		this.output_nodes = new double[this.params.getOutput_nodes()];
 		this.optimal_solution = new double[this.params.getOutput_nodes()];
-		this.solution = new int[this.params.getIterations()];
-		this.train_data = new int[this.params.getIterations()][this.params.getInput_nodes()];
+		this.solution = new double[this.params.getIterations()];
+		this.train_data = new double[this.params.getIterations()][this.params.getInput_nodes()];
 		this.initializeConnections();
 		this.trainNN();
 
@@ -35,7 +36,7 @@ public class NN {
 	}
 	
 	private void initializeConnections() {
-		for (int i = 0; i < this.params.getInput_nodes(); i++) {
+		for (int i = 0; i < this.params.getInput_nodes()+1; i++) {
 			for (int j = 0; j < this.params.getOutput_nodes(); j++) {
 				connections.add(new Connection(i,j));
 			}
@@ -52,35 +53,41 @@ public class NN {
 			this.setOptimalNodes(solution[iterations]);
 			this.setOutputNodes();
 			this.updateWeights();
+			this.getClassification(iterations);
 			iterations++;
-			System.out.println(this.output_nodes[0]);
+			
+			
 		}
 	}
 
 
 
-	private void testNN() {
+	public void testNN() {
 		int tests = 0;
+		
 		this.initInput(this.params.getTestfile());
 		while (this.params.getTests()>tests) {
 			this.setInputNodes(tests);
 			this.setOutputNodes();
-			this.getClassification(solution[tests]);
-			
+			this.getClassification(tests);
+			tests++;
 		}
 	}	
 	private void setInputNodes(int iteration) {
-		// TODO Auto-generated method stub
-		this.input_nodes = this.train_data[iteration];
+		// TODO Auto-generated method stub 
+		for (int i = 0; i < this.train_data[iteration].length;i++) {
+			this.input_nodes[i] = this.train_data[iteration][i];
+		}
+		this.input_nodes[this.params.getInput_nodes()] = 1;
 	}
 	private void getClassification(int iteration) {
 		// TODO Auto-generated method stub
 		switch(this.params.getOutput_nodes()) {
 		
-		case 10:
+		case 1:
 			this.singleClassification(iteration);
 			break;
-		case 1:
+		case 10:
 			this.decimalClassification(iteration);
 			break;
 		default:
@@ -93,13 +100,15 @@ public class NN {
 	private void decimalClassification(int iteration) {
 		// TODO Auto-generated method stub
 		int max_index = 0;
-		double max_val = Double.MAX_VALUE;
+		double max_val = 0;
 		for (int i = 0; i < this.output_nodes.length; i++) {
-			if (this.output_nodes[i] > max_val) {
-				max_val = this.output_nodes[i];
+			if (this.output_function(this.output_nodes[i]) > max_val) {
+				max_val = this.output_function(this.output_nodes[i]);
 				max_index = i;
 			}
 		}
+		System.out.println("Found " + max_val);
+		System.out.println("Optimal " + this.solution[iteration]);
 		if (max_index == this.solution[iteration]) {
 			this.passed_tests++;
 		} 
@@ -107,12 +116,13 @@ public class NN {
 
 	private void singleClassification(int iteration) {
 		// TODO Auto-generated method stub
-		if (this.solution[iteration] == Math.round(10*this.output_nodes[0])) {
+		System.out.println(10.0*this.output_function(this.output_nodes[0]));
+		if (this.solution[iteration] == Math.round(10.0*this.output_function(this.output_nodes[0]))) {
 			this.passed_tests++;
 		}
 	}
 
-	private void setOptimalNodes(int solution) {
+	private void setOptimalNodes(double solution) {
 		// TODO set the array of optimal nodes based on what the input is representing, could also be done in same
 		// method as when we set the input nodes
 		switch(this.params.getOutput_nodes()) {
@@ -129,7 +139,7 @@ public class NN {
 		
 	}
 
-	private void setDecimalOutput(int solution) {
+	private void setDecimalOutput(double solution) {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < this.optimal_solution.length; i++) {
 			if (i == solution) {
@@ -141,7 +151,7 @@ public class NN {
 		}
 	}
 
-	private void setSingleOutput(int solution) {
+	private void setSingleOutput(double solution) {
 		// TODO Auto-generated method stub
 		this.optimal_solution[0] = (solution * 0.1); 
 	}
@@ -151,7 +161,9 @@ public class NN {
 		for (int i = 0; i<this.connections.size();i++) {
 			Connection connection = this.connections.get(i);
 			double err = this.optimal_solution[connection.getOutput()] - this.output_function(this.output_nodes[connection.getOutput()]);
-			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv(connection.getOutput())*this.input_nodes[connection.getInput()]*this.params.getLr()));
+			double test = this.output_function(this.output_nodes[connection.getOutput()]);
+			//System.out.println(err);
+			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv(this.output_nodes[connection.getOutput()])*this.input_nodes[connection.getInput()]*this.params.getLr()));
 		}
 	}
 
@@ -162,7 +174,7 @@ public class NN {
 		}
 		//just set output nodes as sum of inputs
 		//for (int i = 0; i < this.output_nodes.length; i++) {
-		//	this.output_nodes[i] = this.output_function(this.output_nodes[i]);
+		//	System.out.println(this.output_function(this.output_nodes[i]));
 		//}
 		
 	}
@@ -212,13 +224,14 @@ public class NN {
 				int array_index = 0;
 				String line = br.readLine().trim();
 				while(line.length()!=1) {//go until classification
+					
 					for (int i = 0; i<line.length();i++) {
-						this.train_data[j][array_index] = line.charAt(i);
+						this.train_data[j][array_index] = (double) line.charAt(i) - 48;
 						array_index++;
 					}
 					line = br.readLine().trim();
 				}
-				this.solution[j] = Integer.parseInt(line);
+				this.solution[j] = Double.parseDouble(line);
 				
 			}
 		} catch (FileNotFoundException e) {
@@ -240,9 +253,9 @@ public class NN {
 				for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
 					//once the first city is reached start recording cities.
 					
-					this.train_data[j][i]= Integer.parseInt(vals[i]);
+					this.train_data[j][i]= Double.parseDouble(vals[i]);
 				}
-				this.solution[j] = Integer.parseInt(vals[vals.length-1]);
+				this.solution[j] = Double.parseDouble(vals[vals.length-1]);
 			}
 			
 		} catch (FileNotFoundException e) {
@@ -254,11 +267,11 @@ public class NN {
 		
 	}
 	private double output_function(double input) {
-		return Math.pow(1+Math.exp(-1*input + 0.5), -1);
+		return 1/(1+Math.exp(-1*input ));
 	
 	}
 	private double output_function_deriv(double input) {
-		return Math.pow(1+Math.exp(-1*input + 0.5), -2) *  Math.exp(-1*input + 0.5);
+		return output_function(input)*(1-output_function(input));//Math.pow(1+Math.exp(-1*input + 0.5), -2) *  Math.exp(-1*input + 0.5);
 	}
 	public int getPassedTests() {
 		return this.passed_tests;
