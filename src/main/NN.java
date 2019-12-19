@@ -21,6 +21,7 @@ public class NN {
 	
 	private double[][] train_data;
 	public NN(Params params) {
+		this.passed_tests = 0;
 		this.params = params;
 		this.input_nodes = new double[this.params.getInput_nodes()+1];
 		this.connections = new ArrayList<Connection>();
@@ -32,7 +33,7 @@ public class NN {
 		this.trainNN();
 
 
-		this.passed_tests = 0;
+		
 	}
 	
 	private void initializeConnections() {
@@ -46,14 +47,17 @@ public class NN {
 
 	private void trainNN() {
 		int iterations = 0;
-		this.initInput(this.params.getFilename());
-		this.setOptimalNodes(solution[iterations]);
+		this.initInput(this.params.getFilename(),this.params.getIterations());
+		//this.setOptimalNodes(solution[iterations]);
 		while (this.params.getIterations()>iterations) {
 			this.setInputNodes(iterations);
 			this.setOptimalNodes(solution[iterations]);
 			this.setOutputNodes();
 			this.updateWeights();
-			this.getClassification(iterations);
+			//this.getClassification(iterations);
+			//System.out.println(this.output_function(this.output_nodes[0]));
+			//System.out.println(this.connections.get(20).getWeight());
+			
 			iterations++;
 			
 			
@@ -65,7 +69,7 @@ public class NN {
 	public void testNN() {
 		int tests = 0;
 		
-		this.initInput(this.params.getTestfile());
+		this.initInput(this.params.getTestfile(), this.params.getTests());
 		while (this.params.getTests()>tests) {
 			this.setInputNodes(tests);
 			this.setOutputNodes();
@@ -107,8 +111,8 @@ public class NN {
 				max_index = i;
 			}
 		}
-		System.out.println("Found " + max_val);
-		System.out.println("Optimal " + this.solution[iteration]);
+		//System.out.println("Found " + max_val);
+		//System.out.println("Optimal " + this.solution[iteration]);
 		if (max_index == this.solution[iteration]) {
 			this.passed_tests++;
 		} 
@@ -116,8 +120,10 @@ public class NN {
 
 	private void singleClassification(int iteration) {
 		// TODO Auto-generated method stub
-		System.out.println(10.0*this.output_function(this.output_nodes[0]));
-		if (this.solution[iteration] == Math.round(10.0*this.output_function(this.output_nodes[0]))) {
+		//System.out.println("observed: " + Math.round(10.0*this.output_function(this.output_nodes[0])));
+		//System.out.println("Actual: " +  this.solution[iteration]);
+		if (this.solution[iteration] == Math.round(10.0*this.output_function(this.output_nodes[0])-0.5)) {
+			System.out.println(this.passed_tests);
 			this.passed_tests++;
 		}
 	}
@@ -143,10 +149,10 @@ public class NN {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < this.optimal_solution.length; i++) {
 			if (i == solution) {
-				this.optimal_solution[i] = 1;
+				this.optimal_solution[i] = (double) 1.0;
 			}
 			else {
-				this.optimal_solution[i] = 0;
+				this.optimal_solution[i] = (double) 0.0;
 			}
 		}
 	}
@@ -162,15 +168,19 @@ public class NN {
 			Connection connection = this.connections.get(i);
 			double err = this.optimal_solution[connection.getOutput()] - this.output_function(this.output_nodes[connection.getOutput()]);
 			double test = this.output_function(this.output_nodes[connection.getOutput()]);
-			//System.out.println(err);
+			//System.out.println("Targ " + this.optimal_solution[connection.getOutput()] + " actual " + this.output_function(this.output_nodes[connection.getOutput()]));
 			connection.setWeight(connection.getWeight()+(err*this.output_function_deriv(this.output_nodes[connection.getOutput()])*this.input_nodes[connection.getInput()]*this.params.getLr()));
 		}
 	}
 
 	private void setOutputNodes() {
+		for (int i = 0; i < this.output_nodes.length; i++) {
+			this.output_nodes[i] = 0.0;
+		}
 		for (int i = 0; i < this.connections.size(); i++) {
 			Connection connection = this.connections.get(i);
-			this.output_nodes[connection.getOutput()] += this.input_nodes[connection.getInput()] * connection.getWeight();
+			this.output_nodes[connection.getOutput()] += (this.input_nodes[connection.getInput()] * connection.getWeight());
+			//System.out.println(this.output_nodes[connection.getOutput()]);
 		}
 		//just set output nodes as sum of inputs
 		//for (int i = 0; i < this.output_nodes.length; i++) {
@@ -179,15 +189,15 @@ public class NN {
 		
 	}
 
-	private void initInput(String filename) {
+	private void initInput(String filename, int iterations) {
 		switch(this.params.getInput_nodes()) {
 			case 32*32:
 				//parse 32x32 bit array, one node created for value of each bit
-				this.initArrayInput(filename);
+				this.initArrayInput(filename, iterations);
 				break;
 			case 64:
 				//parse 64 int list, one node for each int
-				this.initListInput(filename);
+				this.initListInput(filename, iterations);
 				break;
 			default:
 				System.out.println("Unrecognized input type");
@@ -197,30 +207,11 @@ public class NN {
 		
 	}
 	
-	//connection object
-		//wieght
-		//input node
-		//output node
-		
-	
-		// output nodes
-			// 
-	
-	
-		// update nodes
-			// calculate output values
-			// loop through output nodes
-				// through connections made to it
-					// 
-		//
-
-
-
-	private void initArrayInput(String filename) {
+	private void initArrayInput(String filename, int iterations) {
 		// TODO 
-		try {
+		try { 
 			BufferedReader br = new BufferedReader(new FileReader(filename));
-			for (int j = 0; j < this.params.getIterations(); j++) {
+			for (int j = 0; j < iterations; j++) {
 				int array_index = 0;
 				String line = br.readLine().trim();
 				while(line.length()!=1) {//go until classification
@@ -242,12 +233,12 @@ public class NN {
 		}
 	}
 
-	private void initListInput(String filename) {
+	private void initListInput(String filename, int iterations) {
 		// TODO 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(filename));
 			
-			for (int j = 0; j < this.params.getIterations(); j++) {
+			for (int j = 0; j < iterations; j++) {
 				String line = br.readLine().trim();
 				String[] vals = line.split(",");
 				for (int i = 0; i < LIST_NODES; i++){//stop cases are EOF or -1
@@ -267,7 +258,7 @@ public class NN {
 		
 	}
 	private double output_function(double input) {
-		return 1/(1+Math.exp(-1*input ));
+		return 1.0/(1+Math.exp(-1.0*input + 0.5));
 	
 	}
 	private double output_function_deriv(double input) {

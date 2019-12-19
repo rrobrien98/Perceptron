@@ -19,7 +19,7 @@ public class Lab {
 		//percentage of passed tests
 		test.testNN();
 		System.out.println("results");
-		System.out.println(test.getPassedTests()/tests);
+		System.out.println((double) test.getPassedTests());
 		
 	}
 
