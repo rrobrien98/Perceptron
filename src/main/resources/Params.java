@@ -1,7 +1,9 @@
 package main.resources;
-
+/*
+ * class to hold all the parameters needed to construct a neural net
+ */
 public class Params {
-//filename, type of input, type of output, number of iterations
+
 	private int input_nodes;
 	private int output_nodes;
 	private String filename;
